@@ -21,6 +21,7 @@ func replaceValue(strsql string) (string, error) {
 	return sql, nil
 }
 
+//将日志打印的sql转换成可执行的sql
 func main() {
 	fmt.Println("sql format start")
 

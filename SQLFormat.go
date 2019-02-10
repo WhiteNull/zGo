@@ -8,7 +8,9 @@ import (
 func replaceValue(strsql string) (string, error) {
 	s := strings.Index(strsql, "[")
 	e := strings.LastIndex(strsql, "]")
-
+	if s <= 0 || e <= 0 {
+		return "", fmt.Errorf("要格式化的SQL不正确")
+	}
 	sql := strsql[:s]
 	sqlvalue := strsql[s+1 : e]
 	values := strings.Split(sqlvalue, " ")
@@ -22,11 +24,11 @@ func replaceValue(strsql string) (string, error) {
 func main() {
 	fmt.Println("sql format start")
 
-	strsql := "SELECT remittance_app_id FROM `remittance_app`  WHERE (  bill_batch_id = ? AND bill_batch_typ = ? AND auth_sts !=? AND is_deleted = ?) LIMIT 1 [12580 2 3 1] 1"
+	strsql := ""
 
 	esql, err := replaceValue(strsql)
 	if err != nil {
-		fmt.Print(err)
+		fmt.Println(err)
 	} else {
 		fmt.Println("可执行sql:")
 		fmt.Println(esql)

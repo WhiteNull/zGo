@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	fmt.Println("change to alpha start")
-	b, err := ioutil.ReadFile("/etc/woda/GlobalConfigure_alpha.yaml")
+	fmt.Println("change to sit start")
+	b, err := ioutil.ReadFile("/etc/woda/GlobalConfigure_sit.yaml")
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -16,7 +16,7 @@ func main() {
 		fmt.Print("fail:")
 		fmt.Print(err)
 	} else {
-		fmt.Print("success")
+		fmt.Println("success")
 	}
-	fmt.Println("change to alpha end")
+	fmt.Println("change to sit start")
 }

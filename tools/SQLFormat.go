@@ -25,7 +25,7 @@ func replaceValue(strsql string) (string, error) {
 func main() {
 	fmt.Println("sql format start")
 
-	strsql := ""
+	strsql := "SELECT uuid,mobile FROM `user`  WHERE `user`.`user_id` = ? AND ((is_deleted=?)) [163114 1] 1"
 
 	esql, err := replaceValue(strsql)
 	if err != nil {

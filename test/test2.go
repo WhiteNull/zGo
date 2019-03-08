@@ -5,7 +5,7 @@ import (
 	"fmt"
 	log "github.com/xiaomi-tc/log15"
 	"strconv"
-	"strings"
+	"time"
 )
 
 func main() {
@@ -18,10 +18,9 @@ func main() {
 
 	fmt.Println("--------------------------")
 
-	aa := "123456"
+	a := "2019-03-01"
+	ta, _ := time.Parse("2006-01-02", a)
 
-	bb := strings.Split(aa, "3")
-
-	fmt.Println(bb)
+	fmt.Println(ta.AddDate(0, -1, 0))
 
 }

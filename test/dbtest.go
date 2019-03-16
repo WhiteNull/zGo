@@ -30,6 +30,7 @@ func dbTimerPing(ggorm *gorm.DB) {
 
 func main() {
 	//连接db
+	//alpha
 	ip := "139.224.170.14"
 	port := 10133
 	username := "testing"
@@ -50,16 +51,14 @@ func main() {
 		go dbTimerPing(gGorm)
 	})
 	gGorm.LogMode(true)
-
-	item := Dao.User{}
-	db := gGorm.New().Table(Dao.User{}.TableName()).
-		Select("*").
-		Where("user_id = ?", 88921).
-		Find(&item)
+	//连接db end
+	db := gGorm.New().Table(Dao.BillWeeklyBatchImportDetail{}.TableName()).
+		Where("bill_weekly_batch_import_detail_id = ?", 298).
+		Update("ent_id", 7)
 	if db.Error != nil {
-		fmt.Println(db.Error.Error())
+		fmt.Println(",,,,,,,,,")
 	} else {
-		fmt.Println("success")
+		fmt.Println("lllllllll")
 	}
-	fmt.Println(item)
+
 }

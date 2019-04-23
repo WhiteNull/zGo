@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	fmt.Println("change to sit start")
-	b, err := ioutil.ReadFile("/etc/woda/GlobalConfigure_sit.yaml")
+	fmt.Println("change to local start")
+	b, err := ioutil.ReadFile("/etc/woda/GlobalConfigure_local.yaml")
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -18,5 +18,5 @@ func main() {
 	} else {
 		fmt.Println("success")
 	}
-	fmt.Println("change to sit end")
+	fmt.Println("change to local end")
 }

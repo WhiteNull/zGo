@@ -45,6 +45,10 @@ func main() {
 		fmt.Println(k)
 	}
 	fmt.Println("after delete")
+	delete(aa, "d")
+	delete(aa, "e")
+	delete(aa, "f")
+	delete(aa, "g")
 	fmt.Println(aa)
 
 }

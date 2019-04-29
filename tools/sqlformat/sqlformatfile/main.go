@@ -2,9 +2,39 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 )
+
+func main() {
+	fileurl := "/Users/gongzhihong/Documents/OneDrive/files online/sql.sql"
+	fmt.Println("format sql start")
+	fmt.Println("file url is:" + fileurl)
+	b, err := ioutil.ReadFile(fileurl)
+	if err != nil {
+		fmt.Println("io real file err:")
+		fmt.Print(err)
+		return
+	}
+	strsql := string(b)
+
+	rv, err := replaceValue(strsql)
+	if err != nil {
+		fmt.Println("replace ? to value err:")
+		fmt.Println(err)
+	}
+	bw := []byte(strsql + "\r\r\r" + rv)
+	err = ioutil.WriteFile(fileurl, bw, 0644)
+	if err != nil {
+		fmt.Print("io write file err:")
+		fmt.Print(err)
+		return
+	} else {
+		fmt.Println("success")
+	}
+	fmt.Println("format sql end")
+}
 
 func replaceValue(strsql string) (string, error) {
 	s := strings.Index(strsql, "[")
@@ -44,20 +74,4 @@ func replaceValue(strsql string) (string, error) {
 		return "", fmt.Errorf("[]中的值数量比sql中的?数量少")
 	}
 	return sql, nil
-}
-
-//将日志打印的sql转换成可执行的sql
-func main() {
-	fmt.Println("sql format start")
-
-	strsql := "UPDATE `user_clock_rec` SET `advance_pay_amt` = ?, `calculate_pay_sts` = ?, `clock_out_addr` = ?, `clock_out_device` = ?, `clock_out_ent_loc_id` = ?, `clock_out_is_valid` = ?, `clock_out_latitude` = ?, `clock_out_longitude` = ?, `clock_out_sts` = ?, `clock_out_tm` = ?, `clock_out_typ` = ?, `clock_pay_amt` = ?, `clock_sts` = ?, `credit_subsidy_amt` = ?, `name_list_id` = ?, `uuid` = ?  WHERE `user_clock_rec`.`user_clock_rec_id` = ? [2231 5 222222222 设备Id 0 1 19211 19211 2 2019-04-27 10:51:21 1 2232 2 2233 16223 251722 100000120]"
-
-	esql, err := replaceValue(strsql)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("可执行sql:")
-		fmt.Println(esql)
-	}
-	fmt.Println("sql format end")
 }

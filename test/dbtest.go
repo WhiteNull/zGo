@@ -30,24 +30,24 @@ func dbTimerPing(ggorm *gorm.DB) {
 
 func main() {
 	//连接db
-	////alpha
-	//ip := "139.224.170.14"
-	//port := 10133
-	//username := "testing"
-	//password := "Test!@#321"
-	//dbname := "zxx"
+	//alpha
+	ip := "139.224.170.14"
+	port := 10133
+	username := "testing"
+	password := "Test!@#321"
+	dbname := "zxx"
 	////sit
 	//ip := "139.196.72.249"
 	//port := 9090
 	//username := "dbtest"
 	//password := "Test@Woda2018"
 	//dbname := "zxx_sit"
-	//local
-	ip := "192.168.199.73"
-	port := 3306
-	username := "root"
-	password := "password"
-	dbname := "zxx"
+	////local
+	//ip := "192.168.199.73"
+	//port := 3306
+	//username := "root"
+	//password := "password"
+	//dbname := "zxx"
 	gGorm, err := gorm.Open("mysql", BuildConnInfo(username, password, ip, fmt.Sprintf("%d", port), dbname))
 	if err != nil {
 		fmt.Println("InitDb", "gorm.Open", err)
@@ -66,67 +66,107 @@ func main() {
 	//连接db end
 
 	//start do
-	item := make([]*PreLeakOutStruct, 0)
-	db := gGorm.New().Table(Dao.BillWeeklyBatchPeriodSplitDetail{}.TableName()).
-		Select("bill_weekly_batch_period_split_detail.bill_weekly_batch_period_split_detail_id as split_id,bill_weekly_batch_period_split_detail.ent_id,bill_weekly_batch_period_split_detail.trgt_sp_id,"+
-			"bill_weekly_batch_detail.srce_sp_id,user_unique.real_name,bill_weekly_batch_detail.work_card_no,"+
-			"user.mobile,bill_weekly_batch_period_split_detail.id_card_num,SUM(bill_weekly_batch_period_split_detail.advance_pay_amt) as paid_amt,"+
-			"bill_weekly_batch_detail.entry_dt,bill_weekly_batch_detail.leave_dt,user_idcard_audit.audit_tm").
-		Joins("LEFT JOIN bill_weekly_batch_detail on bill_weekly_batch_period_split_detail.bill_weekly_batch_detail_id = bill_weekly_batch_detail.bill_weekly_batch_detail_id").
-		Joins("LEFT JOIN user_unique on bill_weekly_batch_period_split_detail.uuid = user_unique.uuid").
-		Joins("LEFT JOIN user_idcard_audit on bill_weekly_batch_period_split_detail.id_card_num = user_idcard_audit.id_card_num").
-		Joins("LEFT JOIN user on user_idcard_audit.user_id = user.user_id").
-		Where("bill_weekly_batch_period_split_detail.bill_related_mo =?", "2019-03-01").
-		Where("bill_weekly_batch_period_split_detail.srce_sp_audit_sts =?", 2).
-		Where("bill_weekly_batch_period_split_detail.trgt_sp_audit_sts =?", 2).
-		Where("bill_weekly_batch_period_split_detail.is_deleted =?", 1).
-		Where("bill_weekly_batch_detail.entry_dt <= bill_weekly_batch_period_split_detail.end_dt").
-		Where("(bill_weekly_batch_detail.leave_dt = '0000-00-00') or (bill_weekly_batch_detail.leave_dt !='0000-00-00' and bill_weekly_batch_detail.leave_dt >= bill_weekly_batch_period_split_detail.begin_dt)").
-		Where("user_idcard_audit.audit_sts =?", 2).
-		Where("user_idcard_audit.is_deleted =?", 1).
-		Where("user.is_deleted = ?", 1).
-		Where("user.is_certed = ?", 1)
-	db = db.Group("ent_id,trgt_sp_id,srce_sp_id,real_name,work_card_no,mobile,id_card_num,entry_dt,leave_dt")
-	db.Find(&item)
+	cfgdtlids := []int64{}
+	dictid := 0
+
+	item := make([]Dao.CfgDictDetail, 0)
+	db := gGorm.New().Table(Dao.CfgDictDetail{}.TableName())
+	if len(cfgdtlids) > 0 {
+		db = db.Where("cfg_dict_detail_id in (?)", cfgdtlids)
+	}
+	if dictid != 0 {
+		db = db.Where("cfg_dict_id = ?", dictid)
+	}
+	db = db.Where("is_deleted = ?", 1).
+		Find(&item)
 	if db.Error != nil {
-		if db.Error == gorm.ErrRecordNotFound {
-			fmt.Println("1111111111")
-		}
-		fmt.Println("22222222")
+		fmt.Println("fail")
+	} else {
+		fmt.Println("success")
+		fmt.Println(item)
 	}
-	preLeakOutStructMap := map[string]*PreLeakOutStruct{}
-	for _, v := range item {
-		preLeakOutStruct := preLeakOutStructMap[v.IdCardNum]
-		if preLeakOutStruct == nil {
-			preLeakOutStructMap[v.IdCardNum] = v
-		} else {
-			tnew, _ := time.Parse("2006-01-02 15:04:05", v.AuditTm)
-			told, _ := time.Parse("2006-01-02 15:04:05", preLeakOutStruct.AuditTm)
-			if tnew.After(told) || tnew.Equal(told) {
-				if v.SrceSpId > preLeakOutStruct.SplitId {
-					preLeakOutStructMap[v.IdCardNum] = v
-				}
-			}
-		}
-	}
-	newitem := make([]*PreLeakOutStruct, 0)
-	for _, v := range preLeakOutStructMap {
-		newitem = append(newitem, v)
-	}
-	fmt.Println("33333333")
 }
 
-type PreLeakOutStruct struct {
-	EntId      int64
-	TrgtSpId   int64
-	SrceSpId   int64
-	RealName   string
-	WorkCardNo string
-	Mobile     string
-	IdCardNum  string
-	PaidAmt    int64
-	EntryDt    string
-	LeaveDt    string
-	AuditTm    string
-	SplitId    int64
+func getNameList(gGorm *gorm.DB, b, e string, entid, trgtid int64) ([]RetentionRateDtl, error) {
+	te, _ := time.Parse("2006-01-02", e)
+	qe := te.AddDate(0, 0, 1).Format("2006-01-02")
+	itemls := make([]RetentionRateDtl, 0)
+	db := gGorm.New().Table(Dao.NameList{}.TableName()).
+		Select("name_list.entry_dt as date," +
+			"name_list.leave_dt," +
+			"name_list.ent_id," +
+			"ent.ent_short_name," +
+			"name_list.trgt_sp_id," +
+			"sp.sp_short_name as trgt_sp_short_name," +
+			"count(name_list_id) as new_intv_count").
+		Joins("LEFT JOIN ent on name_list.ent_id = ent.ent_id " +
+			"and ent.is_deleted = 1").
+		Joins("LEFT JOIN sp on name_list.trgt_sp_id = sp.sp_id " +
+			"and sp.is_deleted = 1").
+		Where("name_list.entry_dt >= ?", b).
+		Where("name_list.entry_dt < ?", qe).
+		Where("name_list.ent_id = ?", entid).
+		Where("name_list.trgt_sp_id = ?", trgtid).
+		Where("name_list.is_valid = ?", 1).
+		Where("name_list.is_deleted = ?", 1).
+		Group("name_list.entry_dt").
+		Order("name_list.entry_dt").
+		Find(&itemls)
+	if db.Error != nil {
+		if db.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, db.Error
+	}
+	return itemls, nil
+}
+
+type RetentionRateDtl struct {
+	DataId            int64
+	Date              string
+	EntId             int64
+	EntShortName      string
+	NewIntvCount      int64
+	RetentionRateList []string
+	TrgtSpId          int64
+	TrgtSpShortName   string
+	LeaveDt           string //前端不用
+}
+
+func GetAllSpMap(db *gorm.DB) (map[int64]string, error) {
+	item := make([]Dao.Sp, 0)
+	db = db.New().Table(Dao.Sp{}.TableName()).
+		Select("sp_id,sp_short_name").
+		Where("is_deleted = ?", 1).
+		Find(&item)
+	if db.Error != nil {
+		if db.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, db.Error
+	}
+	ret := map[int64]string{}
+	for _, v := range item {
+		ret[v.SpId] = v.SpShortName
+	}
+	return ret, nil
+}
+
+func GetAllEntMap(db *gorm.DB) (map[int64]string, error) {
+	item := make([]Dao.Ent, 0)
+	db = db.New().Table(Dao.Ent{}.TableName()).
+		Select("ent_id,ent_short_name").
+		Where("is_deleted = ?", 1).
+		Find(&item)
+	if db.Error != nil {
+		if db.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, db.Error
+	}
+	ret := map[int64]string{}
+	for _, v := range item {
+		ret[v.EntId] = v.EntShortName
+	}
+	return ret, nil
 }

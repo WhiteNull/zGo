@@ -2,42 +2,70 @@ package main
 
 import (
 	"fmt"
-	"github.com/tealeg/xlsx"
+	"math"
 )
 
+var A  = "12345678"
 func main() {
-	aa := "123456789012345678"
-	fmt.Println("****" + aa[4:14] + "****")
 
-	bb := "1234567890123"
-	fmt.Println(bb[0:3] + "****" + bb[len(bb)-4:])
+	A = "bb"
+	fmt.Println(A)
+	pa()
 
-	cc := "2018-08-06 07:14:31"
-	fmt.Println(len(cc))
-	fmt.Println(cc[0:19])
 
-	dd := make([]interface{}, 0)
-	dd = append(dd, "aaaaa")
-	dd = append(dd, "bbbbb")
-	dd = append(dd, "ccccc")
-	dd = append(dd, "ddddd")
-	dd = append(dd, "eeeee")
-	dd = append(dd, "fffff")
-
-	Write(dd)
 }
 
-//一次写一行
-func Write(values []interface{}) {
-	e := new(Excel)
-	row := e.Sheet.AddRow()
-	for _, cellValue := range values {
-		cell := row.AddCell()
-		cell.SetValue(cellValue)
+func pa (){
+	fmt.Println(A)
+}
+
+//小数向下取整保留2位小数
+//f 小数
+func FloatDown2(f float64) float64 {
+	return math.Floor(f)
+}
+
+//小数向下取整保留n位小数
+//f 小数
+func FloatDownN(f float64, n int) float64 {
+	var o float64 = 1
+	for i := 0; i < n; i++ {
+		o = o * 10
 	}
+	return math.Floor(f*o) / o
 }
 
-type Excel struct {
-	File  *xlsx.File
-	Sheet *xlsx.Sheet
+func entryptUserIdCard(i string) (ei string) {
+	if len(i) != 18 {
+		ei = i
+	} else {
+		midi := i[4:14]
+		ei = "****" + midi + "****"
+	}
+	return ei
+}
+
+func entryptUserMobile(p string) (ep string) {
+	if len(p) != 11 {
+		ep = p
+	} else {
+		fp := p[:3]
+		bp := p[7:]
+		ep = fp + "****" + bp
+	}
+	return ep
+}
+
+func EntryptBankCard(p string) (ep string) {
+	if len(p) < 6 {
+		ep = p
+	} else {
+		bp := p[len(p)-6:]
+		strx := ""
+		for i := 0; i < len(p)-6; i++ {
+			strx = strx + "*"
+		}
+		ep = strx + bp
+	}
+	return ep
 }
